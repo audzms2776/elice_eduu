@@ -3,37 +3,13 @@ This script shows how to predict stock prices using a basic RNN
 '''
 import tensorflow as tf
 import numpy as np
-import matplotlib
 import matplotlib.pyplot as plt
-import os
+from tensorflow.contrib import rnn
 
 tf.set_random_seed(777)  # reproducibility
 
-if "DISPLAY" not in os.environ:
-    # remove Travis CI Error
-    matplotlib.use('Agg')
-
 
 def MinMaxScaler(data):
-    ''' Min Max Normalization
-
-    Parameters
-    ----------
-    data : numpy.ndarray
-        input data to be normalized
-        shape: [Batch size, dimension]
-
-    Returns
-    ----------
-    data : numpy.ndarry
-        normalized data
-        shape: [Batch size, dimension]
-
-    References
-    ----------
-    .. [1] http://sebastianraschka.com/Articles/2014_about_feature_scaling.html
-
-    '''
     numerator = data - np.min(data, 0)
     denominator = np.max(data, 0) - np.min(data, 0)
     # noise term prevents the zero division
@@ -46,10 +22,11 @@ data_dim = 5
 hidden_dim = 10
 output_dim = 1
 learning_rate = 0.01
-iterations = 500
+iterations = 1000
 
 # Open, High, Low, Volume, Close
-xy = np.loadtxt('data-02-stock_daily.csv', delimiter=',')
+# xy = np.loadtxt('stock.csv', delimiter=',')
+xy = np.loadtxt('csv_data/abusers.csv', delimiter=',')
 xy = xy[::-1]  # reverse order (chronically ordered)
 xy = MinMaxScaler(xy)
 x = xy
@@ -78,22 +55,14 @@ X = tf.placeholder(tf.float32, [None, seq_length, data_dim])
 Y = tf.placeholder(tf.float32, [None, 1])
 
 # build a LSTM network
-cell = tf.contrib.rnn.BasicLSTMCell(
-    num_units=hidden_dim, state_is_tuple=True, activation=tf.tanh)
+cell = rnn.BasicLSTMCell(num_units=hidden_dim, state_is_tuple=True, activation=tf.tanh)
 outputs, _states = tf.nn.dynamic_rnn(cell, X, dtype=tf.float32)
-Y_pred = tf.contrib.layers.fully_connected(
-    outputs[:, -1], output_dim, activation_fn=None)  # We use the last cell's output
+Y_pred = tf.layers.dense(outputs[:, -1], output_dim, activation=None)  # We use the last cell's output
 
 # cost/loss
-loss = tf.reduce_sum(tf.square(Y_pred - Y))  # sum of the squares
+loss = tf.losses.mean_squared_error(Y, Y_pred)
 # optimizer
-optimizer = tf.train.AdamOptimizer(learning_rate)
-train = optimizer.minimize(loss)
-
-# RMSE
-targets = tf.placeholder(tf.float32, [None, 1])
-predictions = tf.placeholder(tf.float32, [None, 1])
-rmse = tf.sqrt(tf.reduce_mean(tf.square(targets - predictions)))
+train = tf.train.AdamOptimizer(learning_rate).minimize(loss)
 
 with tf.Session() as sess:
     init = tf.global_variables_initializer()
@@ -105,12 +74,7 @@ with tf.Session() as sess:
             X: trainX, Y: trainY})
         print("[step: {}] loss: {}".format(i, step_loss))
 
-    # Test step
     test_predict = sess.run(Y_pred, feed_dict={X: testX})
-    rmse_val = sess.run(rmse, feed_dict={
-        targets: testY, predictions: test_predict})
-    print("RMSE: {}".format(rmse_val))
-
     # Plot predictions
     plt.plot(testY)
     plt.plot(test_predict)
