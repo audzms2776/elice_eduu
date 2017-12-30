@@ -11,7 +11,7 @@ def create_key(x):
 
 def put_data(x):
     com_name = x[1]
-    name_dict[com_name].append(x[2:])
+    name_dict[com_name].append([x[2], x[5], x[4], x[6], x[3]])
 
 
 with open('data/train_data.json') as data_file:
