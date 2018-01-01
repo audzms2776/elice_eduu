@@ -26,7 +26,7 @@ class DataLoader():
             data_y.append(_y)
 
         # train/test split
-        train_size = int(len(data_y) * 0.7)
+        train_size = int(len(data_y) * FLAGS.data_percent)
         self.trainX, self.testX = np.array(data_x[0:train_size]), np.array(
             data_x[train_size:len(data_x)])
         self.trainY, self.testY = np.array(data_y[0:train_size]), np.array(
