@@ -5,11 +5,11 @@ import matplotlib.pyplot as plt
 import os
 
 flag = tf.app.flags
-flag.DEFINE_integer('iterations', 500, 'iterations')
-flag.DEFINE_integer('seq_length', 7, 'seq_length')
+flag.DEFINE_integer('iterations', 1000, 'iterations')
+flag.DEFINE_integer('seq_length', 10, 'seq_length')
 flag.DEFINE_string('csv_path', 'csv_data', 'csv data path')
 flag.DEFINE_string('model_name', 'rnn', 'rnn model name')
-flag.DEFINE_float('data_percent', 1.0, 'train : test ratio')
+flag.DEFINE_float('data_percent', 0.8, 'train : test ratio')
 FLAGS = flag.FLAGS
 
 f = open('submission.txt', 'w', encoding='utf-8', newline='\n')
@@ -23,12 +23,17 @@ def visual_graph(test_y, test_predict):
     plt.show()
 
 
-def train_fn(sess, graph, loader):
+def train_fn(sess, graph, loader, name):
     sess.run(tf.global_variables_initializer())
     train_x, train_y = loader.get_train()
 
     for i in range(1, FLAGS.iterations + 1):
-        _, step_loss = graph.train(train_x, train_y)
+        merged_summary = tf.summary.merge_all()
+        writer = tf.summary.FileWriter('log/rnn-{}'.format(name))
+        _, step_loss, summary = graph.train(train_x, train_y, merged_summary)
+
+        if i % 50 == 0:
+            writer.add_summary(summary, global_step=i)
 
         if i % 100 == 0:
             print("[step: {}] loss: {}".format(i, step_loss))
@@ -67,10 +72,10 @@ def main(_):
     graph = RnnModel(sess, FLAGS.model_name)
     files = read_test_list()
 
-    for idx, name in enumerate(files):
+    for idx, name in enumerate(files[:10]):
         print('{} :: {}/{}'.format(name, idx, len(files)))
         data_loader = DataLoader(os.path.join(FLAGS.csv_path, name) + '.csv', FLAGS)
-        train_fn(sess, graph, data_loader)
+        train_fn(sess, graph, data_loader, name)
         v, d = prediction_stock(graph, data_loader)
         write_file(v, d)
 
