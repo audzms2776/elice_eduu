@@ -2,9 +2,9 @@ import numpy as np
 
 
 class DataLoader():
-    def __init__(self, FLAGS):
+    def __init__(self, data_file, FLAGS):
         self.FLAGS = FLAGS
-        xy = np.loadtxt('csv_data/answers.csv', delimiter=',')
+        xy = np.loadtxt(data_file, delimiter=',')
 
         self.global_min = np.min(xy, 0)
         numerator = xy - self.global_min
@@ -45,7 +45,12 @@ class DataLoader():
         prev_data = (self.y * (self.denominator + 1e-7) + self.global_min)[-1, -1]
         pred_data = (l_pred * (self.denominator + 1e-7) + self.global_min)[:, [-1]][0][0]
 
+        is_up = prev_data < pred_data
+        up_down_dict = {True: '+', False: '-'}
+
         print("""
             prev : {}, prediction: {}
             how {}
-            """.format(prev_data, pred_data, prev_data > pred_data))
+            """.format(prev_data, pred_data, up_down_dict[is_up]))
+
+        return pred_data, up_down_dict[is_up]
