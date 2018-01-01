@@ -5,10 +5,11 @@ import matplotlib.pyplot as plt
 import os
 
 flag = tf.app.flags
-flag.DEFINE_integer('iterations', 1000, 'iterations')
+flag.DEFINE_integer('iterations', 500, 'iterations')
 flag.DEFINE_integer('seq_length', 7, 'seq_length')
 flag.DEFINE_string('csv_path', 'csv_data', 'csv data path')
 flag.DEFINE_string('model_name', 'rnn', 'rnn model name')
+flag.DEFINE_float('data_percent', 1.0, 'train : test ratio')
 FLAGS = flag.FLAGS
 
 f = open('submission.txt', 'w', encoding='utf-8', newline='\n')
@@ -29,7 +30,7 @@ def train_fn(sess, graph, loader):
     for i in range(1, FLAGS.iterations + 1):
         _, step_loss = graph.train(train_x, train_y)
 
-        if i % 50 == 0:
+        if i % 100 == 0:
             print("[step: {}] loss: {}".format(i, step_loss))
 
 
@@ -66,9 +67,9 @@ def main(_):
     graph = RnnModel(sess, FLAGS.model_name)
     files = read_test_list()
 
-    for file in files:
-        print(file)
-        data_loader = DataLoader(os.path.join(FLAGS.csv_path, file) + '.csv', FLAGS)
+    for idx, name in enumerate(files):
+        print('{} :: {}/{}'.format(name, idx, len(files)))
+        data_loader = DataLoader(os.path.join(FLAGS.csv_path, name) + '.csv', FLAGS)
         train_fn(sess, graph, data_loader)
         v, d = prediction_stock(graph, data_loader)
         write_file(v, d)
