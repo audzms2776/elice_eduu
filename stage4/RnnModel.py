@@ -16,15 +16,22 @@ class RnnModel:
         self.Y = tf.placeholder(tf.float32, [None, 1])
 
         # build a LSTM network
-        # cell = rnn.BasicLSTMCell(num_units=hidden_dim, state_is_tuple=True, activation=tf.tanh)
-        cell = rnn.MultiRNNCell(
-            [rnn.BasicLSTMCell(self.FLAGS.hidden_dim, state_is_tuple=True, activation=tf.tanh) for _ in range(10)],
-            state_is_tuple=True)
+        cell = rnn.BasicLSTMCell(num_units=self.FLAGS.hidden_dim, state_is_tuple=True, activation=tf.tanh)
+        # cell = rnn.MultiRNNCell(
+        #     [rnn.BasicLSTMCell(self.FLAGS.hidden_dim, state_is_tuple=True, activation=tf.tanh) for _ in range(10)],
+        #     state_is_tuple=True)
 
         outputs, _states = tf.nn.dynamic_rnn(cell, self.X, dtype=tf.float32)
-        layer1 = tf.layers.dense(outputs[:, -1], 30, activation=tf.nn.relu)
-        layer2 = tf.layers.dense(layer1, 10, activation=tf.nn.relu)
-        self.Y_pred = tf.layers.dense(layer2, self.FLAGS.output_dim, activation=None)  # We use the last cell's output
+
+        curr_layer = tf.reshape(outputs[:, -1], [-1, 5, 5, 1])
+        conv1 = tf.layers.conv2d(inputs=curr_layer, filters=10, kernel_size=[3, 3], activation=tf.nn.relu)
+        conv2 = tf.layers.conv2d(inputs=conv1, filters=20, kernel_size=[2, 2], activation=tf.nn.relu)
+        conv3 = tf.layers.conv2d(inputs=conv2, filters=1, kernel_size=[2, 2], activation=None)
+
+        self.Y_pred = tf.reshape(conv3, (-1, 1))
+        #
+        # self.Y_pred = tf.layers.dense(result, self.FLAGS.output_dim,
+        #                               activation=None)  # We use the last cell's output
 
         # cost/loss
         self.loss = tf.losses.mean_squared_error(self.Y, self.Y_pred)
@@ -37,7 +44,8 @@ class RnnModel:
             self.X: train_x, self.Y: train_y
         })
 
-    def test(self, test_x):
-        return self.sess.run(self.Y_pred, feed_dict={
-            self.X: test_x
+    def test(self, test_x, test_y):
+        return self.sess.run([self.Y_pred, self.loss], feed_dict={
+            self.X: test_x,
+            self.Y: test_y
         })
