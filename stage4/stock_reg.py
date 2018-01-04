@@ -6,9 +6,9 @@ import os
 
 flag = tf.app.flags
 flag.DEFINE_integer('iterations', 5000, 'iterations')
-flag.DEFINE_integer('seq_length', 10, 'seq_length')
+flag.DEFINE_integer('seq_length', 7, 'seq_length')
 flag.DEFINE_integer('data_dim', 5, 'data_dim')
-flag.DEFINE_integer('hidden_dim', 50, 'hidden_dim')
+flag.DEFINE_integer('hidden_dim', 25, 'hidden_dim')
 flag.DEFINE_integer('output_dim', 1, 'output_dim')
 flag.DEFINE_string('csv_path', 'csv_data', 'csv data path')
 flag.DEFINE_string('model_name', 'rnn', 'rnn model name')
@@ -32,7 +32,7 @@ def train_fn(sess, graph, loader, name):
     sess.run(tf.global_variables_initializer())
     train_x, train_y = loader.get_train()
     merged_summary = tf.summary.merge_all()
-    writer = tf.summary.FileWriter('log/rnn-{}'.format(name))
+    writer = tf.summary.FileWriter('log3/rnn-c-{}'.format(name))
 
     for i in range(1, FLAGS.iterations + 1):
         _, step_loss, summary = graph.train(train_x, train_y, merged_summary)
@@ -40,28 +40,26 @@ def train_fn(sess, graph, loader, name):
         if i % 500 == 0:
             writer.add_summary(summary, global_step=i)
 
-        if i % 100 == 0:
+        if i % 500 == 0:
             print("[step: {}] loss: {}".format(i, step_loss))
 
 
 def test_fn(graph, loader):
     test_x, test_y = loader.get_test()
-    test_prediction = graph.test(test_x)
+    test_prediction, test_error = graph.test(test_x, test_y)
+    print('test error ', test_error)
     visual_graph(test_y, test_prediction)
-
-
-def prediction_stock(graph, loader):
-    # test_fn(graph, loader)
-
-    last_data = loader.get_last()
-    last_prediction = graph.test(last_data)
-    prediction, direction = loader.last_data_process(last_prediction)
-
-    return prediction, direction
 
 
 def write_file(value, direction):
     f.write('{} {}\n'.format(direction, value))
+
+
+def prediction_stock(graph, loader):
+    last_data = loader.get_last()
+    last_prediction = graph.test(last_data)
+    prediction, direction = loader.last_data_process(last_prediction)
+    write_file(prediction, direction)
 
 
 def read_test_list():
@@ -77,12 +75,12 @@ def main(_):
     graph = RnnModel(sess, FLAGS)
     files = read_test_list()
 
-    for idx, name in enumerate(files[:10]):
+    for idx, name in enumerate(files[:5]):
         print('{} :: {}/{}'.format(name, idx, len(files)))
         data_loader = DataLoader(os.path.join(FLAGS.csv_path, name) + '.csv', FLAGS)
         train_fn(sess, graph, data_loader, name)
-        v, d = prediction_stock(graph, data_loader)
-        write_file(v, d)
+        test_fn(graph, data_loader)
+        # prediction_stock(graph, data_loader)
 
     f.close()
 
