@@ -43,11 +43,12 @@ class DataLoader():
 
     def last_data_process(self, l_pred):
         prev_data = (self.y * (self.denominator + 1e-7) + self.global_min)[-1, -1]
-        pred_data = (l_pred * (self.denominator + 1e-7) + self.global_min)[:, [-1]][0][0]
+        pred_data = (l_pred * (self.denominator + 1e-7) + self.global_min)[:, [-1]][0][0][-1]
 
         is_up = prev_data < pred_data
         up_down_dict = {True: '+', False: '-'}
 
+        print(prev_data, pred_data)
         print("""
             prev : {}, prediction: {}
             how {}
