@@ -29,23 +29,19 @@ class RnnModel:
         conv3 = tf.layers.conv2d(inputs=conv2, filters=1, kernel_size=[2, 2], activation=None)
 
         self.Y_pred = tf.reshape(conv3, (-1, 1))
-        #
-        # self.Y_pred = tf.layers.dense(result, self.FLAGS.output_dim,
-        #                               activation=None)  # We use the last cell's output
 
         # cost/loss
         self.loss = tf.losses.mean_squared_error(self.Y, self.Y_pred)
-        tf.summary.scalar('cost', self.loss)
+        # tf.summary.scalar('cost', self.loss)
         # optimizer
         self.optimizer = tf.train.AdamOptimizer(self.FLAGS.learning_rate).minimize(self.loss)
 
-    def train(self, train_x, train_y, summary):
-        return self.sess.run([self.optimizer, self.loss, summary], feed_dict={
+    def train(self, train_x, train_y):
+        return self.sess.run([self.optimizer, self.loss], feed_dict={
             self.X: train_x, self.Y: train_y
         })
 
-    def test(self, test_x, test_y):
-        return self.sess.run([self.Y_pred, self.loss], feed_dict={
-            self.X: test_x,
-            self.Y: test_y
+    def test(self, test_x):
+        return self.sess.run([self.Y_pred], feed_dict={
+            self.X: test_x
         })
