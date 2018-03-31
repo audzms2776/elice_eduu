@@ -1,5 +1,14 @@
 # elice_eduu
 
+## elice stage1
+영화 평점 예측
+
+## elice stage2
+리그 오브 레전드 전적 예측
+
+## elice stage3
+뉴스 신문사 분류
+
 ## elice stage4
 챌린지! 주식 가격 예측 <br>
 file format <br>
