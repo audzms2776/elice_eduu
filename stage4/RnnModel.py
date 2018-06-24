@@ -17,9 +17,6 @@ class RnnModel:
 
         # build a LSTM network
         cell = rnn.BasicLSTMCell(num_units=self.FLAGS.hidden_dim, state_is_tuple=True, activation=tf.tanh)
-        # cell = rnn.MultiRNNCell(
-        #     [rnn.BasicLSTMCell(self.FLAGS.hidden_dim, state_is_tuple=True, activation=tf.tanh) for _ in range(10)],
-        #     state_is_tuple=True)
 
         outputs, _states = tf.nn.dynamic_rnn(cell, self.X, dtype=tf.float32)
 
